@@ -1,0 +1,7 @@
+.git
+.gitignore
+azure-pipelines.yml
+README.md
+*.log
+__pycache__/
+.env
