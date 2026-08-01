@@ -1,3 +1,332 @@
+## 11.2 Create the Project
+
+```bash
+git clone https://github.com/atulkamble/azure-artifacts-practice.git
+cd azure-artifacts-practice
+```
+
+---
+
+## 11.3 Python Application
+
+File:
+
+```text
+package/app.py
+```
+
+Code:
+
+```python
+def hello() -> None:
+    print("Hello from the Azure Artifacts package")
+
+
+if __name__ == "__main__":
+    hello()
+```
+
+Run:
+
+```bash
+python package/app.py
+```
+
+Expected output:
+
+```text
+Hello from the Azure Artifacts package
+```
+
+---
+
+## 11.4 Configuration File
+
+File:
+
+```text
+package/config.json
+```
+
+Code:
+
+```json
+{
+  "application": "cloudnautic-app",
+  "environment": "training",
+  "version": "1.0.0"
+}
+```
+
+---
+
+## 11.5 Deployment Script
+
+File:
+
+```text
+package/deploy.sh
+```
+
+Code:
+
+```bash
+#!/bin/bash
+
+echo "Starting application deployment"
+echo "Package version: 1.0.0"
+python app.py
+echo "Deployment completed"
+```
+
+Give execute permission:
+
+```bash
+chmod +x package/deploy.sh
+```
+
+---
+
+## 11.6 `.artifactignore`
+
+File:
+
+```text
+.artifactignore
+```
+
+Code:
+
+```gitignore
+.git
+.gitignore
+azure-pipelines.yml
+README.md
+*.log
+__pycache__/
+.env
+```
+
+`.artifactignore` controls files excluded when publishing Universal Packages and pipeline artifacts.
+
+---
+
+# 12. Install Azure DevOps CLI Extension
+
+Check Azure CLI:
+
+```bash
+az version
+```
+
+Install the Azure DevOps extension:
+
+```bash
+az extension add --name azure-devops
+```
+
+Update it when already installed:
+
+```bash
+az extension update --name azure-devops
+```
+
+Sign in:
+
+```bash
+az login
+```
+
+Sign in to Azure DevOps:
+```
+az devops login
+```
+if want to logout existing 
+
+check details 
+```
+az version
+az account show
+env | grep AZURE_DEVOPS
+```
+```
+az devops configure --list
+```
+and 
+```
+az config get extension.use_dynamic_install
+```
+```
+az devops logout
+unset AZURE_DEVOPS_EXT_PAT
+unset AZURE_DEVOPS_EXT_ARTIFACTTOOL_PATVAR
+rm -f ~/.azure/azuredevops/cli/config
+```
+## set new
+```
+export AZURE_DEVOPS_EXT_PAT="PASTE_NEW_PAT_HERE"
+```
+
+Create and Update Token form Azure DevOps Settings (PAT)
+Add Token: 
+
+Configure the default organization:
+
+```bash
+az devops configure --defaults organization=https://dev.azure.com/cloudnautic
+```
+
+Configure the default project:
+
+```bash
+az devops configure --defaults project=project
+
+https://dev.azure.com/cloudnautic/project
+
+az devops configure \
+  --defaults project=artifacts-project
+```
+
+---
+
+# 13. Publish Universal Package Using CLI
+
+## 13.1 Variables
+
+```bash
+ORGANIZATION="https://dev.azure.com/cloudnautic"
+PROJECT="project"
+FEED="cloudnautic-feed"
+PACKAGE_NAME="cloudnautic-tools"
+PACKAGE_VERSION="1.0.4"
+PACKAGE_PATH="./package"
+```
+
+## Verify 
+```
+echo "$ORGANIZATION"
+echo "$PROJECT"
+echo "$FEED"
+echo "$PACKAGE_NAME"
+echo "$PACKAGE_VERSION"
+echo "$PACKAGE_PATH"
+```
+
+## show project 
+```
+az devops project show \
+  --organization "https://dev.azure.com/cloudnautic" \
+  --project "project"
+```
+
+## test feed access 
+```
+az artifacts feed show \
+  --organization "https://dev.azure.com/cloudnautic" \
+  --project "project" \
+  --feed "cloudnautic-feed"
+```
+---
+
+## verify the feed using the Azure DevOps REST API
+```
+az devops invoke \
+  --organization "https://dev.azure.com/cloudnautic" \
+  --area packaging \
+  --resource feeds \
+  --route-parameters project="project" \
+  --api-version "7.1-preview" \
+  --output json
+```
+
+## 13.2 Publish to Project-Scoped Feed
+
+```bash
+
+az artifacts universal publish \
+  --organization "$ORGANIZATION" \
+  --project "$PROJECT" \
+  --scope project \
+  --feed "$FEED" \
+  --name "$PACKAGE_NAME" \
+  --version "$PACKAGE_VERSION" \
+  --description "Cloudnautic training package" \
+  --path "$PACKAGE_PATH"
+```
+
+Universal Package names must follow Azure Artifacts naming rules and should be lowercase.
+
+---
+
+## 13.3 Publish to Organization-Scoped Feed
+
+```bash
+az artifacts universal publish \
+  --organization "$ORGANIZATION" \
+  --scope organization \
+  --feed "$FEED" \
+  --name "$PACKAGE_NAME" \
+  --version "$PACKAGE_VERSION" \
+  --description "Cloudnautic organization package" \
+  --path "$PACKAGE_PATH"
+```
+
+---
+
+## 13.4 Expected Result
+
+```text
+Package Name: cloudnautic-tools
+Version: 1.0.0
+Feed: cloudnautic-feed
+```
+
+Open:
+
+```text
+Azure DevOps
+    -> Artifacts
+    -> cloudnautic-feed
+    -> cloudnautic-tools
+```
+
+---
+
+# 14. Download Universal Package Using CLI
+
+Create a download directory:
+
+```bash
+mkdir downloaded-package
+```
+
+Download:
+
+```bash
+az artifacts universal download \
+  --organization "https://dev.azure.com/cloudnautic" \
+  --project "artifacts-project" \
+  --scope project \
+  --feed "cloudnautic-feed" \
+  --name "cloudnautic-tools" \
+  --version "1.0.0" \
+  --path "./downloaded-package"
+```
+
+Verify:
+
+```bash
+tree downloaded-package
+```
+
+Run the application:
+
+```bash
+python downloaded-package/app.py
+```
+
+---
+
 Practice Azure Artifacts Universal Packages by updating the files, changing the version, publishing a new package version, downloading it, and running it.
 
 ## Version practice plan
