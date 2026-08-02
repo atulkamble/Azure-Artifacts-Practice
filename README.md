@@ -233,7 +233,7 @@ ORGANIZATION="https://dev.azure.com/cloudnautic"
 PROJECT="project"
 FEED="newfeed"
 PACKAGE_NAME="cloudnautic-tools"
-PACKAGE_VERSION="1.0.4"
+PACKAGE_VERSION="1.0.9"
 PACKAGE_PATH="./package"
 ```
 
@@ -265,12 +265,19 @@ az devops invoke \
   --query "value[?name=='$FEED'].{Name:name,ID:id,Project:project.name}" \
   --output table
 ```
-## test feed access 
-```
-az artifacts feed show \
-  --organization "https://dev.azure.com/cloudnautic" \
-  --project "project" \
-  --feed "newfeed"
+## Test feed access
+
+> `az artifacts feed show` is not a valid Azure DevOps CLI command. Use `az devops invoke` instead.
+
+```bash
+az devops invoke \
+  --organization "$ORGANIZATION" \
+  --area packaging \
+  --resource feeds \
+  --route-parameters project="$PROJECT" \
+  --api-version "7.1" \
+  --query "value[?name=='$FEED'].{Name:name,ID:id,Project:project.name}" \
+  --output table
 ```
 ---
 
@@ -351,7 +358,7 @@ Download:
 ```bash
 az artifacts universal download \
   --organization "https://dev.azure.com/cloudnautic" \
-  --project "artifacts-project" \
+  --project "project" \
   --scope project \
   --feed "newfeed" \
   --name "cloudnautic-tools" \
@@ -368,7 +375,13 @@ tree downloaded-package
 Run the application:
 
 ```bash
-python downloaded-package/app.py
+cd downloaded-package
+python3 app.py
+
+chmod +x deploy.sh
+./deploy.sh
+
+cd ..
 ```
 
 ---
@@ -791,47 +804,72 @@ and update the version inside `config.json`, `app.py`, and `deploy.sh`.
 
 ---
 
-# Appendix: Azure CLI Wrapper Authentication Issue (Important)
+# Appendix: Verified ArtifactTool Workflow
 
-During testing, the standard command:
+During testing, the Azure CLI wrapper command:
 
 ```bash
 az artifacts universal publish ...
 ```
 
-consistently failed with:
+failed with:
 
 ```text
 TF400813: The user '<GUID>' is not authorized to access this resource.
 ```
 
-Even though:
+The PAT, project, feed, and permissions were valid. Directly invoking ArtifactTool successfully published and downloaded the package.
 
-- Project access worked.
-- Feed lookup worked.
-- PAT authentication returned HTTP 200.
-- Feed permissions showed **Administrator**.
+## 1. Set variables
 
-## Root Cause
+Run these commands from the repository root:
 
-The Azure DevOps CLI wrapper failed to pass credentials correctly to the underlying **ArtifactTool** process.
+```bash
+cd Azure-Artifacts-Practice
 
-## Working Solution
+ORGANIZATION="https://dev.azure.com/cloudnautic"
+PROJECT="project"
+FEED="newfeed"
+PACKAGE_NAME="cloudnautic-tools"
+PACKAGE_VERSION="1.0.9"
+PACKAGE_PATH="./package"
+DOWNLOAD_PATH="./downloaded-package"
+```
 
-Export a PAT variable:
+## 2. Prepare the PAT for ArtifactTool
 
 ```bash
 export PATVAR="$AZURE_DEVOPS_EXT_PAT"
+
+echo "PAT length: ${#PATVAR}"
 ```
 
-Locate ArtifactTool:
+Expected in this environment:
+
+```text
+PAT length: 84
+```
+
+Do not print the PAT value itself.
+
+## 3. Locate ArtifactTool
 
 ```bash
 ARTIFACT_TOOL=$(find ~/.azure/azuredevops/cli/tools/artifacttool \
-  -type f -name artifacttool | head -1)
+  -type f \
+  -name artifacttool \
+  | head -1)
+
+echo "$ARTIFACT_TOOL"
 ```
 
-Publish directly:
+Example path:
+
+```text
+/Users/atul/.azure/azuredevops/cli/tools/artifacttool/ArtifactTool_osx-x64_0.2.565/artifacttool
+```
+
+## 4. Publish version 1.0.9
 
 ```bash
 "$ARTIFACT_TOOL" \
@@ -840,32 +878,164 @@ Publish directly:
   --patvar PATVAR \
   --feed "$FEED" \
   --package-name "$PACKAGE_NAME" \
-  --package-version "1.0.8" \
+  --package-version "$PACKAGE_VERSION" \
   --path "$PACKAGE_PATH" \
   --project "$PROJECT" \
-  --description "Cloudnautic training package"
+  --description "Cloudnautic training package $PACKAGE_VERSION"
 ```
 
-Expected success:
+Verified success output included:
 
 ```text
+Package does not yet exist
+Processed 4 files from ./package successfully.
+Content pushed
 Added package
+Version: 1.0.9
 Success
 ```
 
-Publishing the same version again returns:
+## 5. Download version 1.0.9
 
-```text
-The package cloudnautic-tools 1.0.8 already exists in newfeed
+```bash
+rm -rf "$DOWNLOAD_PATH"
+mkdir -p "$DOWNLOAD_PATH"
+
+"$ARTIFACT_TOOL" \
+  universal download \
+  --service "$ORGANIZATION" \
+  --patvar PATVAR \
+  --feed "$FEED" \
+  --package-name "$PACKAGE_NAME" \
+  --package-version "$PACKAGE_VERSION" \
+  --path "$DOWNLOAD_PATH" \
+  --project "$PROJECT"
 ```
 
-This is expected because Universal Package versions are immutable.
+Verified success output included:
 
-> **Note:** Replace all examples using `az artifacts universal publish` and `download`
-> with direct `ArtifactTool` commands if you encounter TF400813 despite valid
-> permissions and PAT authentication.
+```text
+Obtained package metadata
+Download completed.
+Version: 1.0.9
+Success
+```
 
+## 6. Verify the downloaded files
 
+```bash
+tree downloaded-package
+```
+
+Expected:
+
+```text
+downloaded-package
+├── app.py
+├── config.json
+└── deploy.sh
+```
+
+## 7. Run the downloaded package
+
+```bash
+cd downloaded-package
+
+python3 app.py
+
+chmod +x deploy.sh
+./deploy.sh
+
+cd ..
+```
+
+The `chmod +x deploy.sh` command is required because the executable permission may not be preserved after package download.
+
+## 8. Publish the next version correctly
+
+Before publishing, return to the repository root. Otherwise, `PACKAGE_PATH="./package"` points to a non-existent directory.
+
+```bash
+cd ~/path/to/Azure-Artifacts-Practice
+```
+
+Confirm the package path:
+
+```bash
+pwd
+ls -la "$PACKAGE_PATH"
+```
+
+Update the package files to version `1.0.10`, then set:
+
+```bash
+PACKAGE_VERSION="1.0.10"
+```
+
+Publish:
+
+```bash
+"$ARTIFACT_TOOL" \
+  universal publish \
+  --service "$ORGANIZATION" \
+  --patvar PATVAR \
+  --feed "$FEED" \
+  --package-name "$PACKAGE_NAME" \
+  --package-version "$PACKAGE_VERSION" \
+  --path "$PACKAGE_PATH" \
+  --project "$PROJECT" \
+  --description "Cloudnautic training package $PACKAGE_VERSION"
+```
+
+## Why `The path provided is invalid` occurred
+
+The command was run from:
+
+```text
+Azure-Artifacts-Practice/downloaded-package
+```
+
+while the variable still contained:
+
+```bash
+PACKAGE_PATH="./package"
+```
+
+From inside `downloaded-package`, `./package` does not exist.
+
+Use either:
+
+```bash
+cd ..
+```
+
+before publishing, or set an absolute package path:
+
+```bash
+PACKAGE_PATH="$(cd package && pwd)"
+```
+
+The recommended approach is to run publish commands from the repository root.
+
+## Immutable versions
+
+Universal Package versions cannot be overwritten.
+
+If version `1.0.9` already exists, publish a new version:
+
+```bash
+PACKAGE_VERSION="1.0.10"
+```
+
+## Security cleanup
+
+After finishing:
+
+```bash
+unset PATVAR
+unset AZURE_DEVOPS_EXT_PAT
+unset AZURE_DEVOPS_EXT_ARTIFACTTOOL_PATVAR
+```
 ---
 
 # Recommended Troubleshooting Workflow
@@ -915,7 +1085,15 @@ export PATVAR="$AZURE_DEVOPS_EXT_PAT"
 
 ARTIFACT_TOOL=$(find ~/.azure/azuredevops/cli/tools/artifacttool -type f -name artifacttool | head -1)
 
-"$ARTIFACT_TOOL" universal publish --service "$ORGANIZATION" --patvar PATVAR --feed "$FEED" --package-name "$PACKAGE_NAME" --package-version "1.0.8" --path "$PACKAGE_PATH" --project "$PROJECT"
+"$ARTIFACT_TOOL" \
+  universal publish \
+  --service "$ORGANIZATION" \
+  --patvar PATVAR \
+  --feed "$FEED" \
+  --package-name "$PACKAGE_NAME" \
+  --package-version "$PACKAGE_VERSION" \
+  --path "$PACKAGE_PATH" \
+  --project "$PROJECT"
 ```
 
 This workflow was verified successfully during testing.
