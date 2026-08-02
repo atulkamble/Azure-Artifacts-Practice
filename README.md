@@ -196,7 +196,7 @@ az devops configure \
 ```bash
 ORGANIZATION="https://dev.azure.com/cloudnautic"
 PROJECT="project"
-FEED="cloudnautic-feed"
+FEED="newfeed"
 PACKAGE_NAME="cloudnautic-tools"
 PACKAGE_VERSION="1.0.4"
 PACKAGE_PATH="./package"
@@ -224,7 +224,7 @@ az devops project show \
 az artifacts feed show \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
-  --feed "cloudnautic-feed"
+  --feed "newfeed"
 ```
 ---
 
@@ -278,7 +278,7 @@ az artifacts universal publish \
 ```text
 Package Name: cloudnautic-tools
 Version: 1.0.0
-Feed: cloudnautic-feed
+Feed: newfeed
 ```
 
 Open:
@@ -286,7 +286,7 @@ Open:
 ```text
 Azure DevOps
     -> Artifacts
-    -> cloudnautic-feed
+    -> newfeed
     -> cloudnautic-tools
 ```
 
@@ -307,7 +307,7 @@ az artifacts universal download \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "artifacts-project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.0.0" \
   --path "./downloaded-package"
@@ -429,7 +429,7 @@ az artifacts universal publish \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.0.4" \
   --description "Cloudnautic training package version 1.0.4" \
@@ -454,7 +454,7 @@ az artifacts universal download \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.0.4" \
   --path "./downloaded-package"
@@ -546,7 +546,7 @@ az artifacts universal publish \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.0.5" \
   --description "Updated welcome message and deployment output" \
@@ -638,7 +638,7 @@ az artifacts universal publish \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.1.0" \
   --description "Added application health-check feature" \
@@ -656,7 +656,7 @@ az artifacts universal download \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.0.4" \
   --path "./downloads/1.0.4"
@@ -669,7 +669,7 @@ az artifacts universal download \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.0.5" \
   --path "./downloads/1.0.5"
@@ -682,7 +682,7 @@ az artifacts universal download \
   --organization "https://dev.azure.com/cloudnautic" \
   --project "project" \
   --scope project \
-  --feed "cloudnautic-feed" \
+  --feed "newfeed" \
   --name "cloudnautic-tools" \
   --version "1.1.0" \
   --path "./downloads/1.1.0"
@@ -714,7 +714,7 @@ tree downloads
 ```bash
 ORGANIZATION="https://dev.azure.com/cloudnautic"
 PROJECT="project"
-FEED="cloudnautic-feed"
+FEED="newfeed"
 PACKAGE_NAME="cloudnautic-tools"
 PACKAGE_VERSION="1.1.1"
 PACKAGE_PATH="./package"
