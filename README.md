@@ -638,3 +638,188 @@ Azure-Artifacts-Practice
 
 **Happy Learning! 🚀**
 **Azure Artifacts | Azure DevOps | Universal Packages**
+
+
+# Azure DevOps Pipeline for Azure Artifacts Universal Packages
+
+## Pipeline Purpose
+
+This pipeline automates the complete lifecycle of an Azure Artifacts Universal Package:
+- Test the package files
+- Publish the package to Azure Artifacts
+- Download the published package
+- Verify that the downloaded package works correctly
+
+---
+
+## Pipeline Trigger
+
+```yaml
+trigger:
+  - main
+```
+
+**Explanation**
+
+- The pipeline starts automatically whenever code is pushed to the `main` branch.
+- Ensures every change is packaged and validated.
+
+---
+
+## Agent Pool
+
+```yaml
+pool:
+  vmImage: ubuntu-latest
+```
+
+**Explanation**
+
+- Uses a Microsoft-hosted Ubuntu build agent.
+- Executes all pipeline tasks on a clean virtual machine.
+
+---
+
+## Variables
+
+```yaml
+variables:
+  PROJECT_NAME: project
+  FEED_NAME: newfeed
+  PACKAGE_NAME: cloudnautic-tools
+  PACKAGE_VERSION: 1.0.$(Build.BuildId)
+  PACKAGE_SOURCE: $(Build.SourcesDirectory)/package
+  DOWNLOAD_PATH: $(Build.SourcesDirectory)/downloaded-package
+```
+
+**Explanation**
+
+- `PROJECT_NAME` – Azure DevOps project.
+- `FEED_NAME` – Azure Artifacts feed.
+- `PACKAGE_NAME` – Universal Package name.
+- `PACKAGE_VERSION` – Creates a unique version using the build ID.
+- `PACKAGE_SOURCE` – Folder containing package files.
+- `DOWNLOAD_PATH` – Destination for downloaded package.
+
+---
+
+## Checkout Repository
+
+```yaml
+- checkout: self
+```
+
+Downloads the latest repository source code onto the build agent.
+
+---
+
+## Test Package Files
+
+```yaml
+- script: |
+    python3 $(PACKAGE_SOURCE)/app.py
+    chmod +x $(PACKAGE_SOURCE)/deploy.sh
+    cd $(PACKAGE_SOURCE)
+    ./deploy.sh
+```
+
+**Purpose**
+
+- Tests the Python application.
+- Makes the deployment script executable.
+- Confirms the package works before publishing.
+
+---
+
+## Prepare Package
+
+```yaml
+- task: CopyFiles@2
+```
+
+Copies the `package` folder to `$(Build.ArtifactStagingDirectory)` so it can be published.
+
+---
+
+## Publish Universal Package
+
+```yaml
+- task: UniversalPackages@0
+```
+
+Publishes the staged files to the Azure Artifacts feed.
+
+**Result**
+
+- Creates a new immutable package version.
+- Stores it in the configured feed.
+
+---
+
+## Download Universal Package
+
+```yaml
+- task: UniversalPackages@0
+```
+
+Downloads the same package version from Azure Artifacts.
+
+**Purpose**
+
+- Verifies the published package can be consumed successfully.
+
+---
+
+## Verify Downloaded Package
+
+```yaml
+- script: |
+    find "$(DOWNLOAD_PATH)" -type f
+    cd "$(DOWNLOAD_PATH)"
+    python3 app.py
+    chmod +x deploy.sh
+    ./deploy.sh
+```
+
+**Purpose**
+
+- Lists downloaded files.
+- Executes the application.
+- Runs the deployment script.
+- Confirms the package is valid after download.
+
+---
+
+# Pipeline Flow
+
+1. Trigger pipeline
+2. Checkout repository
+3. Test package files
+4. Stage package
+5. Publish Universal Package
+6. Download published package
+7. Verify downloaded package
+8. Pipeline completes successfully
+
+---
+
+# Expected Output
+
+- A new package version appears in **Azure DevOps → Artifacts → Feed**.
+- Pipeline logs show successful publish and download.
+- Running `app.py` prints:
+
+```text
+Hello from the Azure Artifacts package
+```
+
+---
+
+# Benefits
+
+- Fully automated package publishing.
+- Automatic version generation.
+- Validation before release.
+- Immediate verification after publishing.
+- Reusable packages for development, testing, and production.
+
