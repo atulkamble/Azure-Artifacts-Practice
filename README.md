@@ -1,7 +1,7 @@
 ## 11.2 Create the Project
 
 ```bash
-git clone https://github.com/atulkamble/azure-artifacts-practice.git
+git clone https://github.com/atulkamble/Azure-Artifacts-Practice.git
 cd azure-artifacts-practice
 ```
 
