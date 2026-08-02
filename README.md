@@ -2,7 +2,7 @@
 
 ```bash
 git clone https://github.com/atulkamble/Azure-Artifacts-Practice.git
-cd azure-artifacts-practice
+cd Azure-Artifacts-Practice
 ```
 
 ---
