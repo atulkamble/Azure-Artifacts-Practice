@@ -1,4 +1,4 @@
-## 11.2 Create the Project
+## 1. Create the Project
 
 ```bash
 git clone https://github.com/atulkamble/Azure-Artifacts-Practice.git
@@ -7,7 +7,7 @@ cd Azure-Artifacts-Practice
 
 ---
 
-## 11.3 Python Application
+## 2. Python Application
 
 File:
 
@@ -40,7 +40,7 @@ Hello from the Azure Artifacts package
 
 ---
 
-## 11.4 Configuration File
+## 3. Configuration File
 
 File:
 
@@ -60,7 +60,7 @@ Code:
 
 ---
 
-## 11.5 Deployment Script
+## 4. Deployment Script
 
 File:
 
@@ -87,7 +87,7 @@ chmod +x package/deploy.sh
 
 ---
 
-## 11.6 `.artifactignore`
+## 5. `.artifactignore`
 
 File:
 
@@ -111,7 +111,7 @@ __pycache__/
 
 ---
 
-# 12. Install Azure DevOps CLI Extension
+# 6. Install Azure DevOps CLI Extension
 
 Check Azure CLI:
 
