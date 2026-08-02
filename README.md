@@ -1,3 +1,22 @@
+# Azure Artifacts Universal Packages - Complete Hands-on Guide
+
+This guide walks through creating, publishing, downloading, versioning, and troubleshooting Azure Artifacts Universal Packages. It also includes a verified workaround for the Azure CLI wrapper authentication issue discovered during hands-on testing.
+
+## Document Structure
+
+1. Project Setup
+2. Sample Application
+3. Azure DevOps CLI Setup
+4. Authentication
+5. Publishing Packages
+6. Downloading Packages
+7. Versioning Best Practices
+8. Practice Labs
+9. Troubleshooting
+10. Known Issues
+
+---
+
 ## 1. Create the Project
 
 ```bash
@@ -768,3 +787,135 @@ PACKAGE_VERSION="1.1.2"
 ```
 
 and update the version inside `config.json`, `app.py`, and `deploy.sh`.
+
+
+---
+
+# Appendix: Azure CLI Wrapper Authentication Issue (Important)
+
+During testing, the standard command:
+
+```bash
+az artifacts universal publish ...
+```
+
+consistently failed with:
+
+```text
+TF400813: The user '<GUID>' is not authorized to access this resource.
+```
+
+Even though:
+
+- Project access worked.
+- Feed lookup worked.
+- PAT authentication returned HTTP 200.
+- Feed permissions showed **Administrator**.
+
+## Root Cause
+
+The Azure DevOps CLI wrapper failed to pass credentials correctly to the underlying **ArtifactTool** process.
+
+## Working Solution
+
+Export a PAT variable:
+
+```bash
+export PATVAR="$AZURE_DEVOPS_EXT_PAT"
+```
+
+Locate ArtifactTool:
+
+```bash
+ARTIFACT_TOOL=$(find ~/.azure/azuredevops/cli/tools/artifacttool \
+  -type f -name artifacttool | head -1)
+```
+
+Publish directly:
+
+```bash
+"$ARTIFACT_TOOL" \
+  universal publish \
+  --service "$ORGANIZATION" \
+  --patvar PATVAR \
+  --feed "$FEED" \
+  --package-name "$PACKAGE_NAME" \
+  --package-version "1.0.8" \
+  --path "$PACKAGE_PATH" \
+  --project "$PROJECT" \
+  --description "Cloudnautic training package"
+```
+
+Expected success:
+
+```text
+Added package
+Success
+```
+
+Publishing the same version again returns:
+
+```text
+The package cloudnautic-tools 1.0.8 already exists in newfeed
+```
+
+This is expected because Universal Package versions are immutable.
+
+> **Note:** Replace all examples using `az artifacts universal publish` and `download`
+> with direct `ArtifactTool` commands if you encounter TF400813 despite valid
+> permissions and PAT authentication.
+
+
+---
+
+# Recommended Troubleshooting Workflow
+
+Follow these checks **in order** whenever publishing fails.
+
+## 1. Verify Azure CLI
+
+```bash
+az version
+az extension update --name azure-devops
+```
+
+## 2. Verify Azure DevOps Login
+
+```bash
+az account show
+az devops configure --list
+```
+
+## 3. Verify PAT
+
+```bash
+echo ${#AZURE_DEVOPS_EXT_PAT}
+```
+
+## 4. Verify Feed Exists
+
+```bash
+az devops invoke   --organization "$ORGANIZATION"   --area packaging   --resource feeds   --route-parameters project="$PROJECT"   --api-version "7.1"
+```
+
+## 5. Verify Feed Access
+
+```bash
+curl -L -u ":$AZURE_DEVOPS_EXT_PAT" "https://feeds.dev.azure.com/cloudnautic/project/_apis/packaging/Feeds/<feed-id>?api-version=7.1-preview.1"
+```
+
+HTTP 200 confirms authentication and feed visibility.
+
+## 6. If TF400813 Still Occurs
+
+Use ArtifactTool directly:
+
+```bash
+export PATVAR="$AZURE_DEVOPS_EXT_PAT"
+
+ARTIFACT_TOOL=$(find ~/.azure/azuredevops/cli/tools/artifacttool -type f -name artifacttool | head -1)
+
+"$ARTIFACT_TOOL" universal publish --service "$ORGANIZATION" --patvar PATVAR --feed "$FEED" --package-name "$PACKAGE_NAME" --package-version "1.0.8" --path "$PACKAGE_PATH" --project "$PROJECT"
+```
+
+This workflow was verified successfully during testing.
