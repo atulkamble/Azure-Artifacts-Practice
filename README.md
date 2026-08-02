@@ -162,6 +162,7 @@ unset AZURE_DEVOPS_EXT_PAT
 unset AZURE_DEVOPS_EXT_ARTIFACTTOOL_PATVAR
 rm -f ~/.azure/azuredevops/cli/config
 ```
+
 ## set new
 ```
 export AZURE_DEVOPS_EXT_PAT="PASTE_NEW_PAT_HERE"
@@ -187,6 +188,21 @@ az devops configure \
   --defaults project=artifacts-project
 ```
 
+
+
+
+
+
+
+
+33 Verify if OAT is set
+```
+ if [ -n "$AZURE_DEVOPS_EXT_PAT" ]; then
+  echo "PAT is configured"
+else
+  echo "PAT is missing"
+fi
+```
 ---
 
 # 13. Publish Universal Package Using CLI
