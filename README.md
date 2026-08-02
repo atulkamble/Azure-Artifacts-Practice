@@ -219,6 +219,17 @@ az devops project show \
   --project "project"
 ```
 
+## Check whether newfeed exists 
+```
+az devops invoke \
+  --organization "$ORGANIZATION" \
+  --area packaging \
+  --resource feeds \
+  --route-parameters project="$PROJECT" \
+  --api-version "7.1" \
+  --query "value[?name=='$FEED'].{Name:name,ID:id,Project:project.name}" \
+  --output table
+```
 ## test feed access 
 ```
 az artifacts feed show \
